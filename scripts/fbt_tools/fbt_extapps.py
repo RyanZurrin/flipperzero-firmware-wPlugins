@@ -101,14 +101,14 @@ class AppBuilder:
     def _build_private_lib(self, lib_def):
         lib_src_root_path = self.app_work_dir.Dir("lib").Dir(lib_def.name)
         self.app_env.AppendUnique(
-            CPPPATH=list(
+            CPPPATH=[
                 self.app_env.Dir(lib_src_root_path)
                 .Dir(incpath)
                 .srcnode()
                 .rfile()
                 .abspath
                 for incpath in lib_def.fap_include_paths
-            ),
+            ]
         )
 
         lib_sources = list(
@@ -118,7 +118,7 @@ class AppBuilder:
             )
         )
 
-        if len(lib_sources) == 0:
+        if not lib_sources:
             raise UserError(f"No sources gathered for private library {lib_def}")
 
         private_lib_env = self.app_env.Clone()
@@ -181,17 +181,17 @@ class AppBuilder:
         if self.app.apptype == FlipperAppType.PLUGIN:
             for parent_app_id in self.app.requires:
                 if self.app.fal_embedded:
-                    parent_app = self.app._appmanager.get(parent_app_id)
-                    if not parent_app:
+                    if parent_app := self.app._appmanager.get(parent_app_id):
+                        self.app_env.Install(
+                            target=self.get_app_work_dir(self.app_env, parent_app)
+                            .Dir("assets")
+                            .Dir("plugins"),
+                            source=app_artifacts.compact,
+                        )
+                    else:
                         raise UserError(
                             f"Embedded plugin {self.app.appid} requires unknown app {parent_app_id}"
                         )
-                    self.app_env.Install(
-                        target=self.get_app_work_dir(self.app_env, parent_app)
-                        .Dir("assets")
-                        .Dir("plugins"),
-                        source=app_artifacts.compact,
-                    )
                 else:
                     fal_path = f"apps_data/{parent_app_id}/plugins/{app_artifacts.compact.name}"
                     deployable = True
@@ -282,13 +282,13 @@ def validate_app_imports(target, source, env):
     with open(target[0].path, "rt") as f:
         for line in f:
             app_syms.add(line.split()[0])
-    unresolved_syms = app_syms - sdk_cache.get_valid_names()
-    if unresolved_syms:
+    if unresolved_syms := app_syms - sdk_cache.get_valid_names():
         warning_msg = fg.brightyellow(
             f"{source[0].path}: app may not be runnable. Symbols not resolved using firmware's API: "
         ) + fg.brightmagenta(f"{unresolved_syms}")
-        disabled_api_syms = unresolved_syms.intersection(sdk_cache.get_disabled_names())
-        if disabled_api_syms:
+        if disabled_api_syms := unresolved_syms.intersection(
+            sdk_cache.get_disabled_names()
+        ):
             warning_msg += (
                 fg.brightyellow(" (in API, but disabled: ")
                 + fg.brightmagenta(f"{disabled_api_syms}")
@@ -316,13 +316,12 @@ def GetExtAppByIdOrPath(env, app_dir):
     if not app:
         raise UserError(f"Failed to resolve application for given APPSRC={app_dir}")
 
-    app_artifacts = env["EXT_APPS"].get(app.appid, None)
-    if not app_artifacts:
+    if app_artifacts := env["EXT_APPS"].get(app.appid, None):
+        return app_artifacts
+    else:
         raise UserError(
             f"Application {app.appid} is not configured to be built as external"
         )
-
-    return app_artifacts
 
 
 def resources_fap_dist_emitter(target, source, env):
@@ -378,7 +377,7 @@ def prepare_app_file_assets(target, source, env):
     )
 
     bundler = FileBundler(
-        list(env.Dir(asset_dir).abspath for asset_dir in env["APP"]._assets_dirs)
+        [env.Dir(asset_dir).abspath for asset_dir in env["APP"]._assets_dirs]
     )
     bundler.export(files_section_node.abspath)
 

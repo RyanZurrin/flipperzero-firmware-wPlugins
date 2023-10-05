@@ -73,7 +73,7 @@ _OBS_descr = (
 )
 
 
-_OBS = dict((param.name, param) for param in _OBS_descr)
+_OBS = {param.name: param for param in _OBS_descr}
 
 
 @dataclass
@@ -171,15 +171,13 @@ class ObReferenceValuesGenerator:
 
 class OptionBytesData:
     def __init__(self, obfname):
-        self.obs = list()
+        self.obs = []
         with open(obfname, "rt") as obfin:
-            self.obs = list(
-                OptionByte(line) for line in obfin if not line.startswith("#")
-            )
+            self.obs = [OptionByte(line) for line in obfin if not line.startswith("#")]
 
     def gen_values(self):
         obref = ObReferenceValuesGenerator()
-        list(obref.apply(ob) for ob in self.obs)
+        [obref.apply(ob) for ob in self.obs]
         return obref
 
 

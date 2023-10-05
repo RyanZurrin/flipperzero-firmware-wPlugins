@@ -22,7 +22,7 @@ srcs = [
 extensions = [
     Extension(
         "TrezorCrypto",
-        sources=["TrezorCrypto.pyx", "c.pxd"] + [x + ".c" for x in srcs],
+        sources=["TrezorCrypto.pyx", "c.pxd"] + [f"{x}.c" for x in srcs],
         extra_compile_args=[],
     )
 ]

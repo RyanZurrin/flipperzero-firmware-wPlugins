@@ -30,8 +30,7 @@ class HardwareTargetLoader:
         if not target_json_file.exists():
             raise Exception(f"Target file {target_json_file} does not exist")
         with open(target_json_file.get_abspath(), "r") as f:
-            vals = json.load(f)
-            return vals
+            return json.load(f)
 
     def _processTargetDefinitions(self, target_id):
         self.layered_target_dirs.append(f"targets/f{target_id}")

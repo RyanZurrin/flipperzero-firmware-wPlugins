@@ -4,7 +4,7 @@ from SCons.Errors import UserError
 def _get_device_serials(search_str="STLink"):
     import serial.tools.list_ports as list_ports
 
-    return set([device.serial_number for device in list_ports.grep(search_str)])
+    return {device.serial_number for device in list_ports.grep(search_str)}
 
 
 def GetDevices(env):

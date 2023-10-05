@@ -40,7 +40,7 @@ class Main(App):
                 continue
             if isinstance(v, str):
                 v = v.strip('"')
-            meta[self.args.project + "_" + k] = v
+            meta[f"{self.args.project}_{k}"] = v
 
         print(json.dumps(meta, indent=4))
         return 0

@@ -32,11 +32,11 @@ class ShowQueueInfo(gdb.Command):
                     qType = QueueMode.Map[a]
                     qTypes.append(qType)
                 except KeyError:
-                    print("Arg %s does not map to a Queue Type!" % a)
+                    print(f"Arg {a} does not map to a Queue Type!")
 
         reg = HandleRegistry()
         qToShow = []
-        if len(qTypes) > 0:
+        if qTypes:
             # We will only print info about queues
             for qType in qTypes:
                 qObjs = reg.FilterBy(qType)
@@ -123,16 +123,13 @@ class ShowList(gdb.Command):
     def invoke(self, arg, from_tty):
         argv = gdb.string_to_argv(arg)
 
-        CastTypeStr = None
         if len(argv) > 0:
             symbolArg = argv[0]
 
-        if len(argv) > 1:
-            CastTypeStr = argv[1]
-
+        CastTypeStr = argv[1] if len(argv) > 1 else None
         listVal = ListInspector(symbolArg)
 
         elems = listVal.GetElements(CastTypeStr)
 
         for elem in elems:
-            print("Elem: %s" % str(elem))
+            print(f"Elem: {str(elem)}")

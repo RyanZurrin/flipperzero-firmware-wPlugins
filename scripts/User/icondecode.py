@@ -12,11 +12,11 @@ def padded_hex(i, l):
     extra_zeros = "0" * (given_len - num_hex_chars)  # may not get used..
 
     return (
-        "0x" + hex_result
+        f"0x{hex_result}"
         if num_hex_chars == given_len
         else "?" * given_len
         if num_hex_chars > given_len
-        else "0x" + extra_zeros + hex_result
+        else f"0x{extra_zeros}{hex_result}"
         if num_hex_chars < given_len
         else None
     )
@@ -70,9 +70,9 @@ b = list(data_decoded_str)
 
 c = ", ".join(padded_hex(my_int, 2) for my_int in b)
 
-width_out = "#define icon_width " + str(imageWidth) + "\n"
-height_out = "#define icon_height " + str(imageHeight) + "\n"
-bytes_out = "static unsigned char icon_bits[] = {" + str(c) + "};"
+width_out = f"#define icon_width {str(imageWidth)}" + "\n"
+height_out = f"#define icon_height {str(imageHeight)}" + "\n"
+bytes_out = "static unsigned char icon_bits[] = {" + c + "};"
 
 data = width_out + height_out + bytes_out
 

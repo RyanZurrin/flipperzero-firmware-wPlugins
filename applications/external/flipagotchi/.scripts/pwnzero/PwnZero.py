@@ -86,7 +86,7 @@ class PwnZero(plugins.Plugin):
         try:
             self._serialConn = serial.Serial(port, baud)
         except:
-            raise "Cannot bind to port ({}) with baud ({})".format(port, baud)
+            raise f"Cannot bind to port ({port}) with baud ({baud})"
 
     def close(self):
         """
@@ -110,11 +110,7 @@ class PwnZero(plugins.Plugin):
         :param: s: String to convert
         :return: List of bytes
         """
-        retVal = []
-        for c in s:
-            retVal.append(ord(c))
-        
-        return retVal
+        return [ord(c) for c in s]
 
     def _send_data(self, param: int, args) -> bool:
         """
@@ -130,15 +126,12 @@ class PwnZero(plugins.Plugin):
         for i in args:
             if not self._is_byte(i):
                 return False
-        
+
         # Now we know everything is a valid byte
-        
+
         # Build the sending data
-        data = [self.PROTOCOL_START]
-        data.append(param)
-        for arg in args:
-            data.append(arg)
-        
+        data = [self.PROTOCOL_START, param]
+        data.extend(iter(args))
         data.append(self.PROTOCOL_END)
 
         # Send data to flipper
@@ -175,12 +168,8 @@ class PwnZero(plugins.Plugin):
         # Make sure channel is valid
         if not (0 <= channel <= 255):
             return False
-        
-        channelStr = "*"
 
-        if channel != 0:
-            channelStr = str(channel)
-
+        channelStr = str(channel) if channel != 0 else "*"
         data = self._str_to_bytes(channelStr)
         return self._send_data(PwnZeroParam.CHANNEL.value, data)
 
@@ -192,7 +181,7 @@ class PwnZero(plugins.Plugin):
         :param: apsTotal: Number of APS in unit lifetime
         :return: If the command was sent successfully
         """
-        data = self._str_to_bytes("{} ({})".format(apsCurrent, apsTotal))
+        data = self._str_to_bytes(f"{apsCurrent} ({apsTotal})")
         return self._send_data(PwnZeroParam.APS.value, data)
 
     def set_uptime(self, hh: int, mm: int, ss: int) -> bool:
@@ -213,7 +202,7 @@ class PwnZero(plugins.Plugin):
         mmA = str(mm).zfill(2)
         ssA = str(ss).zfill(2)
 
-        data = self._str_to_bytes("{}:{}:{}".format(hhA, mmA, ssA))
+        data = self._str_to_bytes(f"{hhA}:{mmA}:{ssA}")
         return self._send_data(PwnZeroParam.UPTIME.value, data)
 
     def set_friend(self) -> bool:
@@ -241,7 +230,7 @@ class PwnZero(plugins.Plugin):
         :param: handshakesTotal: Number of handshakes in the lifetime of unit
         :return: If the command was sent successfully
         """
-        data = self._str_to_bytes("{} ({})".format(handshakesCurrent, handshakesTotal))
+        data = self._str_to_bytes(f"{handshakesCurrent} ({handshakesTotal})")
         return self._send_data(PwnZeroParam.HANDSHAKES.value, data)
 
     def set_message(self, message: str) -> bool:
@@ -274,10 +263,7 @@ class PwnZero(plugins.Plugin):
         # Channel
         channelInt = 0
         channel = ui.get('channel')
-        if channel == '*':
-            channelInt = 0
-        else:
-            channelInt = int(channel)
+        channelInt = 0 if channel == '*' else int(channel)
         self.set_channel(channelInt)
 
         # Uptime
@@ -287,13 +273,13 @@ class PwnZero(plugins.Plugin):
 
         # APS
         aps = ui.get('aps')
-        
+
         # name
         self.set_name(ui.get('name').replace(">", ""))
 
         # Face
         face = ui.get('face')
-        
+
         faceEnum = None
         if face == faces.LOOK_R:
             faceEnum = PwnFace.LOOK_R

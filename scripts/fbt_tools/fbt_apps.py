@@ -52,8 +52,7 @@ def DumpApplicationConfig(target, source, env):
     print(f"Loaded {len(env['APPMGR'].known_apps)} app definitions.")
     print(fg.boldgreen("Firmware modules configuration:"))
     for apptype in FlipperAppType:
-        app_sublist = env["APPBUILD"].get_apps_of_type(apptype)
-        if app_sublist:
+        if app_sublist := env["APPBUILD"].get_apps_of_type(apptype):
             print(
                 fg.green(f"{apptype.value}:\n\t"),
                 ", ".join(app.appid for app in app_sublist),

@@ -38,8 +38,8 @@ class Main(App):
                 self.logger.error(e)
                 return 3
 
-        widths = set(img.width for img in images)
-        heights = set(img.height for img in images)
+        widths = {img.width for img in images}
+        heights = {img.height for img in images}
         if len(widths) != 1 or len(heights) != 1:
             self.logger.error("All images must have same dimensions!")
             return 2

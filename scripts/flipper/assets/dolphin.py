@@ -130,8 +130,7 @@ class DolphinBubbleAnimation:
         while True:
             try:
                 # Bubble data
-                bubble = {}
-                bubble["Slot"] = file.readKeyInt("Slot")
+                bubble = {"Slot": file.readKeyInt("Slot")}
                 bubble["X"] = file.readKeyInt("X")
                 bubble["Y"] = file.readKeyInt("Y")
                 bubble["Text"] = file.readKey("Text")
@@ -218,12 +217,10 @@ class DolphinBubbleAnimation:
 
         file.save(meta_filename)
 
-        to_pack = []
-        for index, frame in enumerate(self.frames):
-            to_pack.append(
-                (frame, os.path.join(animation_directory, f"frame_{index}.bm"))
-            )
-
+        to_pack = [
+            (frame, os.path.join(animation_directory, f"frame_{index}.bm"))
+            for index, frame in enumerate(self.frames)
+        ]
         if ImageTools.is_processing_slow():
             pool = multiprocessing.Pool()
             pool.map(_convert_image_to_bm, to_pack)
@@ -236,7 +233,7 @@ class DolphinBubbleAnimation:
             pool = multiprocessing.Pool()
             self.frames = pool.map(_convert_image, self.frames)
         else:
-            self.frames = list(_convert_image(frame) for frame in self.frames)
+            self.frames = [_convert_image(frame) for frame in self.frames]
 
 
 class DolphinManifest:

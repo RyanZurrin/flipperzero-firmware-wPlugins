@@ -71,10 +71,11 @@ class CubeProgrammer:
         return ob_correct
 
     def setOptionBytes(self, option_bytes):
-        options = []
-        for key, (value, attr) in option_bytes.items():
-            if "w" in attr:
-                options.append(f"{key}={value}")
+        options = [
+            f"{key}={value}"
+            for key, (value, attr) in option_bytes.items()
+            if "w" in attr
+        ]
         self._execute(["-ob", *options])
         return True
 

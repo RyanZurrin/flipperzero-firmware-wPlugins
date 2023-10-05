@@ -53,13 +53,14 @@ class UpdateDownloader:
             self.logger.error(f"Failed to parse json index: {e}")
             return False
 
-        # Find channel
-        channel = None
-        for channel_candidate in index["channels"]:
-            if channel_candidate["id"] == channel_id:
-                channel = channel_candidate
-                break
-
+        channel = next(
+            (
+                channel_candidate
+                for channel_candidate in index["channels"]
+                if channel_candidate["id"] == channel_id
+            ),
+            None,
+        )
         # Check if channel found
         if channel is None:
             self.logger.error(
@@ -87,21 +88,22 @@ class UpdateDownloader:
 
         # print changelog
         if changelog is not None:
-            self.logger.info(f"Changelog:")
+            self.logger.info("Changelog:")
             for line in changelog.split("\n"):
                 if line.strip() == "":
                     continue
                 self.logger.info(f"  {line}")
 
-        # Find file
-        file_url = None
-        for file_candidate in version["files"]:
-            if file_candidate["type"] == self.UPDATE_TYPE:
-                file_url = file_candidate["url"]
-                break
-
+        file_url = next(
+            (
+                file_candidate["url"]
+                for file_candidate in version["files"]
+                if file_candidate["type"] == self.UPDATE_TYPE
+            ),
+            None,
+        )
         if file_url is None:
-            self.logger.error(f"File not found")
+            self.logger.error("File not found")
             return False
 
         # Make file path
@@ -144,7 +146,7 @@ class Main(App):
         # idk why, but python thinks that list_ports.grep returns tuple[str, str, str]
         ports: list[ListPortInfo] = list(list_ports.grep("ESP32-S2"))  # type: ignore
 
-        if len(ports) == 0:
+        if not ports:
             # Blackmagic probe serial port not found, will be handled later
             pass
         elif len(ports) > 1:
@@ -188,7 +190,7 @@ class Main(App):
             # download latest channel update
             try:
                 if not downloader.download(self.args.channel, temp_dir):
-                    self.logger.error(f"Cannot download update")
+                    self.logger.error("Cannot download update")
                     return 1
             except Exception as e:
                 self.logger.error(f"Cannot download update: {e}")
@@ -205,12 +207,10 @@ class Main(App):
                 "--after hard_reset", "--after no_reset_stub"
             )
 
-            args = flash_command.split(" ")[0:]
+            args = flash_command.split(" ")[:]
             args = list(filter(None, args))
 
-            esptool_params = []
-            esptool_params.extend(args)
-
+            esptool_params = list(args)
             self.logger.info(f'Running command: "{" ".join(args)}" in "{temp_dir}"')
 
             process = subprocess.Popen(
@@ -228,7 +228,7 @@ class Main(App):
                         self.logger.debug(f"{line.strip()}")
 
         if process.returncode != 0:
-            self.logger.error(f"Failed to flash WiFi board")
+            self.logger.error("Failed to flash WiFi board")
         else:
             self.logger.info("WiFi board flashed successfully")
             self.logger.info("Press RESET button on WiFi board to start it")

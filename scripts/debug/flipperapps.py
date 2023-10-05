@@ -160,10 +160,10 @@ class FlipperAppStateHelper:
             self._current_apps = []
             return
 
-        loaded_apps: dict[int, gdb.Value] = dict(
-            (AppState.get_gdb_app_ep(app), app)
+        loaded_apps: dict[int, gdb.Value] = {
+            AppState.get_gdb_app_ep(app): app
             for app in self._walk_app_list(app_list[0])
-        )
+        }
 
         for app in self._current_apps.copy():
             if app.entry_address not in loaded_apps:
@@ -173,9 +173,11 @@ class FlipperAppStateHelper:
                 self._current_apps.remove(app)
 
         for entry_point, app in loaded_apps.items():
-            if entry_point not in set(app.entry_address for app in self._current_apps):
+            if entry_point not in {
+                app.entry_address for app in self._current_apps
+            }:
                 new_app_state = AppState.from_gdb(app)
-                print(f"New application loaded. Adding debug info")
+                print("New application loaded. Adding debug info")
                 if self._exec_gdb_command(new_app_state.get_gdb_load_command()):
                     self._current_apps.append(new_app_state)
                 else:

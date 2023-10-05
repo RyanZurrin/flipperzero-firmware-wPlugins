@@ -124,7 +124,7 @@ class Main(App):
 
                 section_name = section.name
                 if section_name.startswith(".rel"):
-                    section_name = ".fast.rel" + section_name[4:]
+                    section_name = f".fast.rel{section_name[4:]}"
                 else:
                     self.logger.error(
                         "Unknown relocation section name: %s", section_name

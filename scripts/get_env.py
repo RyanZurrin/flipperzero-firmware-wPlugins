@@ -25,8 +25,7 @@ def parse_args():
         required=True,
         choices=["pull", "tag", "other"],
     )
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def get_commit_json(event):
@@ -101,13 +100,12 @@ def add_envs(data, gh_env_file, gh_out_file, args):
 
 def main():
     args = parse_args()
-    event_file = open(args.event_file, "r")
-    event = json.load(event_file)
-    gh_env_file = open(os.environ["GITHUB_ENV"], "a")
-    gh_out_file = open(os.environ["GITHUB_OUTPUT"], "a")
-    data = get_details(event, args)
-    add_envs(data, gh_env_file, gh_out_file, args)
-    event_file.close()
+    with open(args.event_file, "r") as event_file:
+        event = json.load(event_file)
+        gh_env_file = open(os.environ["GITHUB_ENV"], "a")
+        gh_out_file = open(os.environ["GITHUB_OUTPUT"], "a")
+        data = get_details(event, args)
+        add_envs(data, gh_env_file, gh_out_file, args)
     gh_env_file.close()
     gh_out_file.close()
 

@@ -138,10 +138,9 @@ class OpenOCDProgrammer(Programmer):
 
         output = process.stdout.read().decode("utf-8").strip() if process.stdout else ""
         self.logger.debug(output)
-        # Find target voltage using regex
-        if match := re.search(r"Target voltage: (\d+\.\d+)", output):
-            voltage = float(match.group(1))
-            if not success:
+        if not success:
+            if match := re.search(r"Target voltage: (\d+\.\d+)", output):
+                voltage = float(match.group(1))
                 if voltage < 1:
                     self.logger.warning(
                         f"Found {self.get_name()}, but device is not connected"
@@ -173,7 +172,7 @@ def blackmagic_find_serial(serial: str):
     # idk why, but python thinks that list_ports.grep returns tuple[str, str, str]
     ports: list[ListPortInfo] = list(list_ports.grep("blackmagic"))  # type: ignore
 
-    if len(ports) == 0:
+    if not ports:
         return None
     elif len(ports) > 2:
         if serial:
@@ -185,7 +184,7 @@ def blackmagic_find_serial(serial: str):
                     ports,
                 )
             )
-            if len(ports) == 0:
+            if not ports:
                 return None
 
         if len(ports) > 2:
@@ -196,11 +195,7 @@ def blackmagic_find_serial(serial: str):
     port = sorted(ports, key=lambda p: f"{p.location}_{p.name}")[0]
 
     if serial:
-        if (
-            serial != port.serial_number
-            and serial != port.name
-            and serial != port.device
-        ):
+        if serial not in [port.serial_number, port.name, port.device]:
             return None
 
     if os.name == "nt":
@@ -220,17 +215,12 @@ def blackmagic_find_networked(serial: str):
         serial = "blackmagic.local"
 
     # remove the tcp: prefix if it's there
-    if serial.startswith("tcp:"):
-        serial = serial[4:]
-
+    serial = serial.removeprefix("tcp:")
     # remove the port if it's there
     if ":" in serial:
         serial = serial.split(":")[0]
 
-    if not (probe := _resolve_hostname(serial)):
-        return None
-
-    return f"tcp:{probe}:2345"
+    return f"tcp:{probe}:2345" if (probe := _resolve_hostname(serial)) else None
 
 
 class BlackmagicProgrammer(Programmer):
@@ -245,8 +235,7 @@ class BlackmagicProgrammer(Programmer):
         self.port: typing.Optional[str] = None
 
     def _add_command(self, params: list[str], command: str):
-        params.append("-ex")
-        params.append(command)
+        params.extend(("-ex", command))
 
     def _valid_ip(self, address):
         try:
@@ -281,7 +270,7 @@ class BlackmagicProgrammer(Programmer):
         # But I choose to use the .elf file directly because we are flashing our own firmware and it always has an elf predecessor.
 
         if file_path.endswith(".bin"):
-            file_path = file_path[:-4] + ".elf"
+            file_path = f"{file_path[:-4]}.elf"
             if not os.path.exists(file_path):
                 self.logger.error(
                     f"Sorry, but Blackmagic can't flash .bin file, and {file_path} doesn't exist"

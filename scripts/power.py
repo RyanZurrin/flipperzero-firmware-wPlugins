@@ -43,7 +43,7 @@ class Main(App):
                 break
 
         if not port:
-            self.logger.info(f"Failed to find flipper")
+            self.logger.info("Failed to find flipper")
             return None
 
         flipper = FlipperStorage(port)

@@ -11,7 +11,7 @@ def resolve_port(logger, portname: str = "auto"):
         flipper = flippers[0]
         logger.info(f"Using {flipper.serial_number} on {flipper.device}")
         return flipper.device
-    elif len(flippers) == 0:
+    elif not flippers:
         logger.error("Failed to find connected Flipper")
     elif len(flippers) > 1:
         logger.error("More than one Flipper is attached")

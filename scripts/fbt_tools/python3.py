@@ -1,9 +1,5 @@
 def generate(env):
-    py_name = "python3"
-    if env["PLATFORM"] == "win32":
-        # On Windows, Python 3 executable is usually just "python"
-        py_name = "python"
-
+    py_name = "python" if env["PLATFORM"] == "win32" else "python3"
     env.SetDefault(
         PYTHON3=py_name,
     )

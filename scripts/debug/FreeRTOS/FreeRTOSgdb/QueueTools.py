@@ -23,16 +23,13 @@ class QueueMode:
 
     @staticmethod
     def IsValid(qType):
-        if (
-            qType == QueueMode.QUEUE
-            or qType == QueueMode.MUTEX
-            or qType == QueueMode.COUNTING
-            or qType == QueueMode.BINARY
-            or qType == QueueMode.RECURSIVE
-        ):
-            return True
-        else:
-            return False
+        return qType in [
+            QueueMode.QUEUE,
+            QueueMode.MUTEX,
+            QueueMode.COUNTING,
+            QueueMode.BINARY,
+            QueueMode.RECURSIVE,
+        ]
 
 
 QueueMap = {
@@ -104,5 +101,5 @@ class QueueInspector:
             # If the TRACE functionality of the RTOS is not enabled,
             #  then the queue type will not be availabe in the queue
             #  handle - so we return None
-            print("Failed to get Type: %s" % str(exc))
+            print(f"Failed to get Type: {str(exc)}")
             return None
