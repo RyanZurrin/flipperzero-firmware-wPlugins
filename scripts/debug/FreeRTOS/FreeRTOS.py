@@ -35,16 +35,17 @@ class Scheduler:
         self._readyLists = []
         readyTasksListsStr = "pxReadyTasksLists"
         readyListsSym, methodType = gdb.lookup_symbol(readyTasksListsStr)
-        if readyListsSym != None:
+        if readyListsSym is None:
+            print(f"Failed to Find Symbol: {readyTasksListsStr}")
+            raise ValueError("Invalid Symbol!")
+
+        else:
             readyLists = readyListsSym.value()
             minIndex, maxIndex = readyLists.type.range()
             for i in range(minIndex, maxIndex + 1):
                 readyList = readyLists[i]
                 FRReadyList = ListInspector(readyList)
                 self._readyLists.append(FRReadyList)
-        else:
-            print("Failed to Find Symbol: %s" % readyTasksListsStr)
-            raise ValueError("Invalid Symbol!")
 
     def ShowTaskList(self):
         self.PrintTableHeader()

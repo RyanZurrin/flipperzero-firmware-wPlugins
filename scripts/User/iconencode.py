@@ -12,11 +12,11 @@ def padded_hex(i, l):
     extra_zeros = "0" * (given_len - num_hex_chars)  # may not get used..
 
     return (
-        "0x" + hex_result
+        f"0x{hex_result}"
         if num_hex_chars == given_len
         else "?" * given_len
         if num_hex_chars > given_len
-        else "0x" + extra_zeros + hex_result
+        else f"0x{extra_zeros}{hex_result}"
         if num_hex_chars < given_len
         else None
     )
@@ -47,7 +47,7 @@ filename = args["infile"].split(".")[0]
 
 imageWidth = args["Width"]
 imageHeight = args["Height"]
-dims = str(imageWidth) + "x" + str(imageHeight)
+dims = f"{str(imageWidth)}x{str(imageHeight)}"
 
 with open(args["infile"], "rb") as f:
     output = f.read()
@@ -65,14 +65,14 @@ c = ",".join(padded_hex(my_int, 2) for my_int in b)
 
 # a bit ugly.
 
-framename = "_I_" + filename + "_" + dims
+framename = f"_I_{filename}_{dims}"
 print(len(b))
 # d=len(b)
 # if b > 255 split 0x1234 into 0x34,0x12
 # d=hex(len(b))
 
-char_out = "const uint8_t " + framename + "_0[] = {" + str(c) + ",};"
-char_out2 = "const uint8_t " + framename + "[] = {" + framename + "_0};"
+char_out = f"const uint8_t {framename}" + "_0[] = {" + c + ",};"
+char_out2 = f"const uint8_t {framename}" + "[] = {" + framename + "_0};"
 # data=bytes_out
 print(char_out)
 print(char_out2)

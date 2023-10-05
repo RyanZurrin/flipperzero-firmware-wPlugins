@@ -18,8 +18,7 @@ def parseArgs():
     parser.add_argument("db_port", type=int, help="MariaDB port")
     parser.add_argument("db_name", help="MariaDB database")
     parser.add_argument("report_file", help="Report file(.map.all)")
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def mariadbConnect(args):
@@ -38,8 +37,7 @@ def mariadbConnect(args):
 
 
 def parseEnv():
-    outArr = []
-    outArr.append(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    outArr = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
     outArr.append(os.getenv("COMMIT_HASH", default=None))
     outArr.append(os.getenv("COMMIT_MSG", default=None))
     outArr.append(os.getenv("BRANCH_NAME", default=None))
@@ -101,15 +99,16 @@ def parseFile(fileObj, headerID):
     arr = []
     fileLines = fileObj.readlines()
     for line in fileLines:
-        lineArr = []
         tempLineArr = line.split("\t")
-        lineArr.append(headerID)
-        lineArr.append(tempLineArr[0])  # section
-        lineArr.append(int(tempLineArr[2], 16))  # address hex
-        lineArr.append(int(tempLineArr[3]))  # size
-        lineArr.append(tempLineArr[4])  # name
-        lineArr.append(tempLineArr[5])  # lib
-        lineArr.append(tempLineArr[6])  # obj_name
+        lineArr = [
+            headerID,
+            tempLineArr[0],
+            int(tempLineArr[2], 16),
+            int(tempLineArr[3]),
+            tempLineArr[4],
+            tempLineArr[5],
+            tempLineArr[6],
+        ]
         arr.append(tuple(lineArr))
     return arr
 
@@ -126,12 +125,11 @@ def insertData(data, cur, conn):
 def main():
     args = parseArgs()
     dbConn = mariadbConnect(args)
-    reportFile = open(args.report_file)
-    dbCurs = dbConn.cursor()
-    createTables(dbCurs, dbConn)
-    headerID = insertHeader(parseEnv(), dbCurs, dbConn)
-    insertData(parseFile(reportFile, headerID), dbCurs, dbConn)
-    reportFile.close()
+    with open(args.report_file) as reportFile:
+        dbCurs = dbConn.cursor()
+        createTables(dbCurs, dbConn)
+        headerID = insertHeader(parseEnv(), dbCurs, dbConn)
+        insertData(parseFile(reportFile, headerID), dbCurs, dbConn)
     dbCurs.close()
 
 

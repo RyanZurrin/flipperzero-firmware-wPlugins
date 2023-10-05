@@ -22,8 +22,12 @@ def proto_emitter(target, source, env):
     target = []
     for src in source:
         basename = os.path.splitext(src.name)[0]
-        target.append(env.File(f"compiled/{basename}.pb.c"))
-        target.append(env.File(f"compiled/{basename}.pb.h"))
+        target.extend(
+            (
+                env.File(f"compiled/{basename}.pb.c"),
+                env.File(f"compiled/{basename}.pb.h"),
+            )
+        )
     return target, source
 
 
@@ -33,8 +37,7 @@ def dolphin_emitter(target, source, env):
     source.extend(env.GlobRecursive("*.*", res_root_dir.srcnode()))
 
     target_base_dir = target[0]
-    env.Replace(_DOLPHIN_OUT_DIR=target[0])
-
+    env.Replace(_DOLPHIN_OUT_DIR=target_base_dir)
     if env["DOLPHIN_RES_TYPE"] == "external":
         target = [target_base_dir.File("manifest.txt")]
         ## A detailed list of files to be generated
@@ -51,8 +54,8 @@ def dolphin_emitter(target, source, env):
     else:
         asset_basename = f"assets_dolphin_{env['DOLPHIN_RES_TYPE']}"
         target = [
-            target_base_dir.File(asset_basename + ".c"),
-            target_base_dir.File(asset_basename + ".h"),
+            target_base_dir.File(f"{asset_basename}.c"),
+            target_base_dir.File(f"{asset_basename}.h"),
         ]
 
     # Debug output

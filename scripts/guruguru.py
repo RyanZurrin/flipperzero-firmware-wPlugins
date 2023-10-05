@@ -12,7 +12,7 @@ class Main(App):
         self.is_building = False
 
     def clearConsole(self):
-        os.system("cls" if os.name in ("nt", "dos") else "clear")
+        os.system("cls" if os.name in {"nt", "dos"} else "clear")
 
     async def rebuild(self, line):
         self.clearConsole()

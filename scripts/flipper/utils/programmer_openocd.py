@@ -26,15 +26,13 @@ class OpenOCDProgrammer(Programmer):
     ):
         super().__init__()
 
-        config = {}
+        config = {"interface": interface, "target": "target/stm32wbx.cfg"}
 
-        config["interface"] = interface
-        config["target"] = "target/stm32wbx.cfg"
-
-        if serial is not None:
-            if interface == "interface/cmsis-dap.cfg":
+        if interface == "interface/cmsis-dap.cfg":
+            if serial is not None:
                 config["serial"] = f"cmsis_dap_serial {serial}"
-            elif "stlink" in interface:
+        elif "stlink" in interface:
+            if serial is not None:
                 config["serial"] = f"stlink_serial {serial}"
 
         if port_base is not None:
@@ -108,7 +106,7 @@ class OpenOCDProgrammer(Programmer):
         ob_reference = ob_values.reference
         ob_compare_mask = ob_values.compare_mask
         ob_length = len(ob_reference)
-        ob_words = int(ob_length / 4)
+        ob_words = ob_length // 4
 
         # Read Option Bytes
         ob_read = bytes()
@@ -156,7 +154,7 @@ class OpenOCDProgrammer(Programmer):
         ob_compare_mask_bytes = ob_values.compare_mask
         ob_write_mask_bytes = ob_values.write_mask
         ob_length = len(ob_reference_bytes)
-        ob_dwords = int(ob_length / 8)
+        ob_dwords = ob_length // 8
 
         # Clear flash errors
         stm32.clear_flash_errors()
@@ -245,7 +243,7 @@ class OpenOCDProgrammer(Programmer):
             for i in range(0, data_size, 4):
                 file_word = int.from_bytes(data[i : i + 4], "little")
                 device_word = self.openocd.read_32(address + i)
-                if device_word != 0xFFFFFFFF and device_word != file_word:
+                if device_word not in [0xFFFFFFFF, file_word]:
                     self.logger.error(
                         f"OTP memory at {address + i:08X} is not empty: {device_word:08X}"
                     )

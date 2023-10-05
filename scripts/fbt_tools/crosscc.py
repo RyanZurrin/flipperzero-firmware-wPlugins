@@ -21,7 +21,7 @@ def prefix_commands(env, command_prefix, cmd_list):
 
 def _get_tool_version(env, tool):
     verstr = "version unknown"
-    proc = _subproc(
+    if proc := _subproc(
         env,
         [env.subst("${%s}" % tool), "--version"],
         stdout=subprocess.PIPE,
@@ -30,8 +30,7 @@ def _get_tool_version(env, tool):
         universal_newlines=True,
         error="raise",
         shell=False,
-    )
-    if proc:
+    ):
         verstr = proc.stdout.readline()
         proc.communicate()
     return verstr

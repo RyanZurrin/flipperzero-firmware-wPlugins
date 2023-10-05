@@ -165,9 +165,9 @@ class SdkTreeBuilder:
         return target, source
 
     def _run_deploy_commands(self):
-        dirs_to_create = set(
+        dirs_to_create = {
             self.sdk_deploy_dir.Dir(dirpath).path for dirpath in self.header_dirs
-        )
+        }
 
         shutil.rmtree(self.sdk_root_dir.path, ignore_errors=False)
 
@@ -199,24 +199,21 @@ def gen_sdk_data(sdk_cache: SdkCache):
         (f"#include <{h.name}>" for h in sdk_cache.get_headers()),
     )
 
-    api_def.append(f"const int elf_api_version = {sdk_cache.version.as_int()};")
-
-    api_def.append(
-        "static constexpr auto elf_api_table = sort(create_array_t<sym_entry>("
-    )
-
-    api_lines = []
-    for fun_def in sdk_cache.get_functions():
-        api_lines.append(
-            f"API_METHOD({fun_def.name}, {fun_def.returns}, ({fun_def.params}))"
+    api_def.extend(
+        (
+            f"const int elf_api_version = {sdk_cache.version.as_int()};",
+            "static constexpr auto elf_api_table = sort(create_array_t<sym_entry>(",
         )
-
-    for var_def in sdk_cache.get_variables():
-        api_lines.append(f"API_VARIABLE({var_def.name}, {var_def.var_type })")
-
-    api_def.append(",\n".join(api_lines))
-
-    api_def.append("));")
+    )
+    api_lines = [
+        f"API_METHOD({fun_def.name}, {fun_def.returns}, ({fun_def.params}))"
+        for fun_def in sdk_cache.get_functions()
+    ]
+    api_lines.extend(
+        f"API_VARIABLE({var_def.name}, {var_def.var_type})"
+        for var_def in sdk_cache.get_variables()
+    )
+    api_def.extend((",\n".join(api_lines), "));"))
     return api_def
 
 

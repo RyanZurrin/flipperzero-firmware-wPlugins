@@ -36,7 +36,7 @@ def BuildModules(env, modules):
 def PhonyTarget(env, name, action, source=None, **kw):
     if not source:
         source = []
-    phony_name = "phony_" + name
+    phony_name = f"phony_{name}"
     env.Pseudo(phony_name)
     command = env.Command(phony_name, source, action, **kw)
     env.AlwaysBuild(env.Alias(name, command))

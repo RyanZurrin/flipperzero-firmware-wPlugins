@@ -10,12 +10,10 @@ def link_elf_dir_as_latest(env, elf_node):
 
 
 def should_gen_cdb_and_link_dir(env, requested_targets):
-    explicitly_building_updater = False
-    # Hacky way to check if updater-related targets were requested
-    for build_target in requested_targets:
-        if "updater" in str(build_target) and "package" not in str(build_target):
-            explicitly_building_updater = True
-
+    explicitly_building_updater = any(
+        "updater" in str(build_target) and "package" not in str(build_target)
+        for build_target in requested_targets
+    )
     is_updater = not env["IS_BASE_FIRMWARE"]
     # If updater is explicitly requested, link to the latest updater
     # Otherwise, link to firmware

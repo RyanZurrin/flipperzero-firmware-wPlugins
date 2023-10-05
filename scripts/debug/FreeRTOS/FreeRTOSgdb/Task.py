@@ -22,13 +22,12 @@ class TaskInspector:
                 self._tcb = handle
                 return
             else:
-                print("Handle Type: %s" % str(handle.type))
+                print(f"Handle Type: {str(handle.type)}")
 
         except AttributeError as aexc:
-            print("Attribute Error: %s" % str(aexc))
-            pass
+            print(f"Attribute Error: {str(aexc)}")
         except Exception as exc:
-            print("Error Initializing Task Inspector: %s" % str(exc))
+            print(f"Error Initializing Task Inspector: {str(exc)}")
             raise
 
         try:
@@ -36,7 +35,7 @@ class TaskInspector:
             self._tcb = tcbPtr.dereference()
             return
         except Exception as exc:
-            print("Failed to convert Handle Pointer: %s" % str(handle))
+            print(f"Failed to convert Handle Pointer: {str(handle)}")
 
         self._tcb = handle
 
@@ -53,10 +52,8 @@ class TaskInspector:
             raise ValueError("Invalid TCB")
 
     def GetStackMargin(self):
-        if self._tcb != None:
-            topStack = self._tcb["pxTopOfStack"]
-            stackBase = self._tcb["pxStack"]
-            highWater = topStack - stackBase
-            return highWater
-        else:
+        if self._tcb is None:
             raise ValueError("Invalid TCB")
+
+        else:
+            return self._tcb["pxTopOfStack"] - self._tcb["pxStack"]

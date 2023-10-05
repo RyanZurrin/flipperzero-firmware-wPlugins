@@ -129,10 +129,14 @@ class AppManager:
             )
 
     def find_by_appdir(self, appdir: str):
-        for app in self.known_apps.values():
-            if app._appdir.name == appdir:
-                return app
-        return None
+        return next(
+            (
+                app
+                for app in self.known_apps.values()
+                if app._appdir.name == appdir
+            ),
+            None,
+        )
 
     def _validate_app_params(self, *args, **kw):
         apptype = kw.get("apptype")
@@ -145,11 +149,10 @@ class AppManager:
                 raise FlipperManifestException(
                     f"Plugin {kw.get('appid')} must have 'requires' in manifest"
                 )
-        else:
-            if kw.get("fal_embedded"):
-                raise FlipperManifestException(
-                    f"App {kw.get('appid')} cannot have fal_embedded set"
-                )
+        elif kw.get("fal_embedded"):
+            raise FlipperManifestException(
+                f"App {kw.get('appid')} cannot have fal_embedded set"
+            )
         # Harmless - cdefines for external apps are meaningless
         # if apptype == FlipperAppType.EXTERNAL and kw.get("cdefines"):
         #     raise FlipperManifestException(
@@ -192,7 +195,7 @@ class AppManager:
                 f"Failed parsing manifest '{app_manifest_path}' : {e}"
             )
 
-        if len(app_manifests) == 0:
+        if not app_manifests:
             raise FlipperManifestException(
                 f"App manifest '{app_manifest_path}' is malformed"
             )
@@ -302,7 +305,7 @@ class AppBuildset:
                 provided.extend(self._get_app_depends(app_name))
 
             # print("provides round: ", provided)
-            if len(provided) == 0:
+            if not provided:
                 break
             self.appnames.update(provided)
 
@@ -357,11 +360,11 @@ class AppBuildset:
             )
 
     def _check_target_match(self):
-        incompatible = []
-        for app in self.appnames:
-            if not self.appmgr.get(app).supports_hardware_target(self.hw_target):
-                incompatible.append(app)
-
+        incompatible = [
+            app
+            for app in self.appnames
+            if not self.appmgr.get(app).supports_hardware_target(self.hw_target)
+        ]
         if len(incompatible):
             raise AppBuilderException(
                 f"Apps incompatible with target {self.hw_target}: {', '.join(incompatible)}"
@@ -413,11 +416,11 @@ class AppBuildset:
 
     def get_builtin_app_folders(self):
         return sorted(
-            set(
+            {
                 (app._appdir, source_type)
                 for app in self.get_builtin_apps()
                 for source_type in app.sources
-            )
+            }
         )
 
 
@@ -483,19 +486,20 @@ class ApplicationsCGenerator:
                 map(self.get_app_ep_forward, self.buildset.get_apps_of_type(apptype))
             )
             entry_type, entry_block = self.APP_TYPE_MAP[apptype]
-            contents.append(f"const {entry_type} {entry_block}[] = {{")
-            contents.append(
-                ",\n".join(
-                    map(self.get_app_descr, self.buildset.get_apps_of_type(apptype))
+            contents.extend(
+                (
+                    f"const {entry_type} {entry_block}[] = {{",
+                    ",\n".join(
+                        map(
+                            self.get_app_descr,
+                            self.buildset.get_apps_of_type(apptype),
+                        )
+                    ),
+                    "};",
+                    f"const size_t {entry_block}_COUNT = COUNT_OF({entry_block});",
                 )
             )
-            contents.append("};")
-            contents.append(
-                f"const size_t {entry_block}_COUNT = COUNT_OF({entry_block});"
-            )
-
-        archive_app = self.buildset.get_apps_of_type(FlipperAppType.ARCHIVE)
-        if archive_app:
+        if archive_app := self.buildset.get_apps_of_type(FlipperAppType.ARCHIVE):
             contents.extend(
                 [
                     self.get_app_ep_forward(archive_app[0]),
@@ -505,9 +509,12 @@ class ApplicationsCGenerator:
 
         entry_type, entry_block = self.APP_EXTERNAL_TYPE
         external_apps = self.buildset.get_apps_of_type(FlipperAppType.MENUEXTERNAL)
-        contents.append(f"const {entry_type} {entry_block}[] = {{")
-        contents.append(",\n".join(map(self.get_external_app_descr, external_apps)))
-        contents.append("};")
-        contents.append(f"const size_t {entry_block}_COUNT = COUNT_OF({entry_block});")
-
+        contents.extend(
+            (
+                f"const {entry_type} {entry_block}[] = {{",
+                ",\n".join(map(self.get_external_app_descr, external_apps)),
+                "};",
+                f"const size_t {entry_block}_COUNT = COUNT_OF({entry_block});",
+            )
+        )
         return "\n".join(contents)

@@ -17,8 +17,9 @@ packets = \
 def bin2hex(x):
     def bin2hex_helper(r):
         while r:
-            yield r[0:2].upper()
+            yield r[:2].upper()
             r = r[2:]
+
     if len(x) == 0: return
     fmt = "{0:0" + str(int(len(x) / 8 * 2)) + "X}"
     hex_data = fmt.format(int(x, 2))
@@ -44,7 +45,7 @@ def split_packet(packet, parts):
     out = []
     packet = packet.replace(' ', '')
     for part_length in parts:
-        out.append(packet[0:part_length])
+        out.append(packet[:part_length])
         packet = packet[part_length:]
     out.append(packet)
     return out
@@ -53,16 +54,16 @@ def split_packet(packet, parts):
 def parse_packet(packet, address_length, ESB):
     """Split a packet into its fields and return them as tuple."""
     if ESB:
-         preamble, address, payload_length, pid, no_ack, rest = split_packet(packet=packet, parts=(8, 8 * address_length, 6, 2, 1))
-         payload, crc = split_packet(packet=rest, parts=((payload_len_default if int(payload_length, 2) > 32 else int(payload_length, 2)) * 8,))
+        preamble, address, payload_length, pid, no_ack, rest = split_packet(packet=packet, parts=(8, 8 * address_length, 6, 2, 1))
+        payload, crc = split_packet(packet=rest, parts=((payload_len_default if int(payload_length, 2) > 32 else int(payload_length, 2)) * 8,))
     else:
-         preamble, address, rest = split_packet(packet=packet, parts=(8, 8 * address_length))
-         crc = packet.rsplit(' ', 1)[1]
-         payload = rest[0:len(rest) - len(crc)]
-         payload_length = pid = no_ack = ''
+        preamble, address, rest = split_packet(packet=packet, parts=(8, 8 * address_length))
+        crc = packet.rsplit(' ', 1)[1]
+        payload = rest[:len(rest) - len(crc)]
+        payload_length = pid = no_ack = ''
 
     assert preamble in ('10101010', '01010101')
-    assert len(crc) in (8, 16)
+    assert len(crc) in {8, 16}
 
     return preamble, address, payload_length, pid, no_ack, payload, crc
 
@@ -109,18 +110,18 @@ if __name__ == '__main__':
         crc_received = '0x' + '{:X}'.format(int(crc_received, 2))
         print(f"Packet: {packet}")
         print('\n'.join((
-			f'Hex: {bin2hexlong(packet)}',
-            'Preamble: 0x%X' % int(preamble,2),
-            f'Address: {address_length} bytes - {bin2hex(address)}')))
+        f'Hex: {bin2hexlong(packet)}',
+        'Preamble: 0x%X' % int(preamble,2),
+        f'Address: {address_length} bytes - {bin2hex(address)}')))
         if ESB:
-             print('\n'.join((
-                 f'Payload length in packet: {int(payload_length, 2)}, used: {(payload_len_default if int(payload_length, 2) > 32 else int(payload_length, 2))}',
-                 f'Payload: {bin2hex(payload)}',
-                 f'Pid: {int(pid, 2)}',
-                 f'No_ack: {int(no_ack, 2) == 1}')))
+            print('\n'.join((
+                f'Payload length in packet: {int(payload_length, 2)}, used: {(payload_len_default if int(payload_length, 2) > 32 else int(payload_length, 2))}',
+                f'Payload: {bin2hex(payload)}',
+                f'Pid: {int(pid, 2)}',
+                f'No_ack: {int(no_ack, 2) == 1}')))
         else:
-             print(f'Not Enhanced ShockBurst packet, payload length: {int(len(payload) / 8)}')
-             print(f'Payload: {bin2hex(payload)}')
+            print(f'Not Enhanced ShockBurst packet, payload length: {len(payload) // 8}')
+            print(f'Payload: {bin2hex(payload)}')
         print(f'CRC{crc_size}: {crc_received}')
         crc_calculated = '0x' + '{:X}'.format(crc(address + payload_length + pid + no_ack + payload, size=crc_size))
         if crc_received == crc_calculated:

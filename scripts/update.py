@@ -142,7 +142,7 @@ class Main(App):
 
         if not self.layout_check(dfu_size, radio_addr):
             self.logger.warn("Memory layout looks suspicious")
-            if not self.args.disclaimer == "yes":
+            if self.args.disclaimer != "yes":
                 self.disclaimer()
                 return 2
 

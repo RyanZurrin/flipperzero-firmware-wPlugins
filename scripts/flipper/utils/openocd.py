@@ -30,14 +30,10 @@ class OpenOCD:
 
         # Config files
 
-        if interface := config.get("interface", None):
-            pass
-        else:
+        if not (interface := config.get("interface", None)):
             interface = "interface/stlink.cfg"
 
-        if target := config.get("target", None):
-            pass
-        else:
+        if not (target := config.get("target", None)):
             target = "target/stm32wbx.cfg"
 
         self._add_file(interface)

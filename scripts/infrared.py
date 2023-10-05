@@ -30,8 +30,7 @@ class Main(App):
         unique = {}
         while True:
             try:
-                d = {}
-                d["name"] = f.readKey("name")
+                d = {"name": f.readKey("name")}
                 d["type"] = f.readKey("type")
                 key = None
                 if d["type"] == "parsed":
@@ -46,7 +45,7 @@ class Main(App):
                     key = f'{d["frequency"]}{d["duty_cycle"]}{d["data"]}'
                 else:
                     raise Exception(f'Unknown type: {d["type"]}')
-                if not key in unique:
+                if key not in unique:
                     unique[key] = d
                     data.append(d)
                 else:

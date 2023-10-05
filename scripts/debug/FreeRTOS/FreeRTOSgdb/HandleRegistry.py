@@ -36,8 +36,7 @@ class HandleRegistry:
             val = h.cast(StdTypes.uint32_t)
             if handle == val:
                 print("Found Entry for: %x" % handle)
-                name = elem["pcQueueName"].string()
-                return name
+                return elem["pcQueueName"].string()
 
     def PrintRegistry(self):
         for i in range(self._minIndex, self._maxIndex):
@@ -57,16 +56,15 @@ class HandleRegistry:
                 name = elem["pcQueueName"].string()
                 q = QueueInspector(h)
                 q.SetName(name)
-                if qMode != None:
-                    qType = q.GetQueueType()
-                    if qType != None:
-                        if qType == qMode:
-                            resp.append(q)
-
-                    else:
-                        print("qType == None")
-                else:
+                if qMode is None:
                     resp.append(q)
+
+                else:
+                    qType = q.GetQueueType()
+                    if qType is None:
+                        print("qType == None")
+                    elif qType == qMode:
+                        resp.append(q)
 
         return resp
 

@@ -42,9 +42,8 @@ class App:
         self.after()
         if isinstance(return_code, int):
             return self._exit(return_code)
-        else:
-            self.logger.error("Missing return code")
-            return self._exit(255)
+        self.logger.error("Missing return code")
+        return self._exit(255)
 
     def _exit(self, code):
         if self.no_exit:

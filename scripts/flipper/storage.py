@@ -50,10 +50,7 @@ class StorageErrorCode(enum.Enum):
     def from_value(cls, s: str | bytes):
         if isinstance(s, bytes):
             s = s.decode("ascii")
-        for code in cls:
-            if code.value == s:
-                return code
-        return cls.UNKNOWN
+        return next((code for code in cls if code.value == s), cls.UNKNOWN)
 
 
 class FlipperStorageException(Exception):
@@ -75,10 +72,7 @@ class BufferedRead:
             # search in buffer
             i = self.buffer.find(eol)
             if i >= 0:
-                if cut_eol:
-                    read = self.buffer[:i]
-                else:
-                    read = self.buffer[: i + len(eol)]
+                read = self.buffer[:i] if cut_eol else self.buffer[: i + len(eol)]
                 self.buffer = self.buffer[i + len(eol) :]
                 return read
 
@@ -170,16 +164,13 @@ class FlipperStorage:
             type, info = line.split(" ", 1)
             if type == "[D]":
                 # Print directory name
-                print((path + "/" + info).replace("//", "/"))
+                print(f"{path}/{info}".replace("//", "/"))
                 # And recursively go inside
-                self.list_tree(path + "/" + info, level + 1)
+                self.list_tree(f"{path}/{info}", level + 1)
             elif type == "[F]":
                 name, size = info.rsplit(" ", 1)
                 # Print file name and size
-                print((path + "/" + name).replace("//", "/") + ", size " + size)
-            else:
-                # Something wrong, pass
-                pass
+                print(f"{path}/{name}".replace("//", "/") + ", size " + size)
 
     def walk(self, path: str = "/"):
         dirs = []
@@ -213,16 +204,12 @@ class FlipperStorage:
             if type == "[D]":
                 # Print directory name
                 dirs.append(info)
-                walk_dirs.append((path + "/" + info).replace("//", "/"))
+                walk_dirs.append(f"{path}/{info}".replace("//", "/"))
 
             elif type == "[F]":
                 name, size = info.rsplit(" ", 1)
                 # Print file name and size
                 nondirs.append(name)
-            else:
-                # Something wrong, pass
-                pass
-
         # topdown walk, yield before recursing
         yield path, dirs, nondirs
         for new_path in walk_dirs:
@@ -272,7 +259,7 @@ class FlipperStorage:
         buffer_size = self.chunk_size
         start_time = time.time()
         self.send_and_wait_eol(
-            'storage read_chunks "' + filename + '" ' + str(buffer_size) + "\r"
+            f'storage read_chunks "{filename}" {str(buffer_size)}' + "\r"
         )
         answer = self.read.until(self.CLI_EOL)
         filedata = bytearray()
@@ -285,11 +272,11 @@ class FlipperStorage:
         read_size = 0
 
         while read_size < size:
-            self.read.until("Ready?" + self.CLI_EOL)
+            self.read.until(f"Ready?{self.CLI_EOL}")
             self.send("y")
             chunk_size = min(size - read_size, buffer_size)
             filedata.extend(self.port.read(chunk_size))
-            read_size = read_size + chunk_size
+            read_size += chunk_size
 
             percent = math.ceil(read_size / size * 100)
             total_chunks = math.ceil(size / buffer_size)
@@ -355,14 +342,13 @@ class FlipperStorage:
 
         self._check_no_error(response, path)
         if response.find(b"File, size:") != -1:
-            size = int(
+            return int(
                 "".join(
                     ch
                     for ch in response.split(b": ")[1].decode("ascii")
                     if ch.isdigit()
                 )
             )
-            return size
         raise FlipperStorageException("Not a file")
 
     def mkdir(self, path: str):
@@ -397,7 +383,7 @@ class FlipperStorage:
 
     def hash_flipper(self, filename: str):
         """Get hash of file on Flipper"""
-        self.send_and_wait_eol('storage md5 "' + filename + '"\r')
+        self.send_and_wait_eol(f'storage md5 "{filename}' + '"\r')
         hash = self.read.until(self.CLI_EOL)
         self.read.until(self.CLI_PROMPT)
         self._check_no_error(hash, filename)

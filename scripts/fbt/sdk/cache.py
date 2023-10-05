@@ -147,13 +147,11 @@ class SdkCache:
         else:
             print(fg.green(f"API version {self.version} is up to date"))
 
-        regenerate_csv = (
+        if regenerate_csv := (
             self.loaded_dirty_version
             or self._have_pending_entries()
             or self.version_action != VersionBump.NONE
-        )
-
-        if regenerate_csv:
+        ):
             str_cache_entries = [self.version]
             name_getter = operator.attrgetter("name")
             str_cache_entries.extend(sorted(self.sdk.headers, key=name_getter))
@@ -193,7 +191,7 @@ class SdkCache:
             )
         else:
             print(entry_dict)
-            raise Exception("Unknown entry type: %s" % entry_class)
+            raise Exception(f"Unknown entry type: {entry_class}")
 
         if entry is None:
             return
@@ -227,15 +225,13 @@ class SdkCache:
     def sync_sets(
         self, known_set: Set[Any], new_set: Set[Any], update_version: bool = True
     ):
-        new_entries = new_set - known_set
-        if new_entries:
+        if new_entries := new_set - known_set:
             print(f"New: {new_entries}")
             known_set |= new_entries
             self.new_entries |= new_entries
             if update_version and self.version_action == VersionBump.NONE:
                 self.version_action = VersionBump.MINOR
-        removed_entries = known_set - new_set
-        if removed_entries:
+        if removed_entries := known_set - new_set:
             print(f"Removed: {removed_entries}")
             self.loaded_dirty_version = True
             known_set -= removed_entries

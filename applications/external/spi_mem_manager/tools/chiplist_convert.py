@@ -15,12 +15,10 @@ def getArgs():
 
 def getXML(file):
     tree = XML.parse(file)
-    root = tree.getroot()
-    return root
+    return tree.getroot()
 
 
 def parseChip(cur, arr, vendor, vendorCodeArr):
-    chip = {}
     chipAttr = cur.attrib
     if "page" not in chipAttr:  # chip without page size not supported
         return
@@ -28,12 +26,14 @@ def parseChip(cur, arr, vendor, vendorCodeArr):
         return
     if len(chipAttr["id"]) < 6:  # ID wihout capacity id not supported yet
         return
-    chip["modelName"] = cur.tag
-    chip["vendorEnum"] = "SPIMemChipVendor" + vendor
-    chip["vendorID"] = "0x" + chipAttr["id"][0] + chipAttr["id"][1]
-    chip["typeID"] = chipAttr["id"][2] + chipAttr["id"][3]
-    chip["capacityID"] = chipAttr["id"][4] + chipAttr["id"][5]
-    chip["size"] = chipAttr["size"]
+    chip = {
+        "modelName": cur.tag,
+        "vendorEnum": f"SPIMemChipVendor{vendor}",
+        "vendorID": "0x" + chipAttr["id"][0] + chipAttr["id"][1],
+        "typeID": chipAttr["id"][2] + chipAttr["id"][3],
+        "capacityID": chipAttr["id"][4] + chipAttr["id"][5],
+        "size": chipAttr["size"],
+    }
     if chipAttr["page"] == "SSTW":
         chip["writeMode"] = "SPIMemChipWriteModeAAIWord"
         chip["pageSize"] = "1"
@@ -54,10 +54,7 @@ def cleanEmptyVendors(vendors):
 
 
 def getVendors(xml, interface):
-    arr = {}
-    for cur in xml.find(interface):
-        arr[cur.tag] = set()
-    return arr
+    return {cur.tag: set() for cur in xml.find(interface)}
 
 
 def parseXML(xml, interface, vendorCodeArr):
@@ -72,7 +69,7 @@ def getVendorNameEnum(vendorID):
     try:
         return vendors[vendorID]
     except:
-        print("Unknown vendor: " + vendorID)
+        print(f"Unknown vendor: {vendorID}")
         sys.exit(1)
 
 

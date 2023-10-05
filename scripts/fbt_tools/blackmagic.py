@@ -20,7 +20,7 @@ class BlackmagicResolver:
         import serial.tools.list_ports as list_ports
 
         ports = list(list_ports.grep("blackmagic"))
-        if len(ports) == 0:
+        if not ports:
             # Blackmagic probe serial port not found, will be handled later
             pass
         elif len(ports) > 2:
@@ -49,10 +49,7 @@ class BlackmagicResolver:
         return probe.device
 
     def get_networked(self):
-        if not (probe := self._resolve_hostname()):
-            return None
-
-        return f"tcp:{probe}:2345"
+        return None if not (probe := self._resolve_hostname()) else f"tcp:{probe}:2345"
 
     def __str__(self):
         # print("distenv blackmagic", self.env.subst("$BLACKMAGIC"))

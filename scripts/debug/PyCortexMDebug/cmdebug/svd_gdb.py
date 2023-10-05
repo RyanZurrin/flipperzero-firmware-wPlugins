@@ -44,16 +44,14 @@ class LoadSVD(gdb.Command):
         try:
             vendor_names = pkg_resources.resource_listdir("cmsis_svd", "data")
             for vendor in vendor_names:
-                fnames = pkg_resources.resource_listdir(
-                    "cmsis_svd", "data/{}".format(vendor)
-                )
+                fnames = pkg_resources.resource_listdir("cmsis_svd", f"data/{vendor}")
                 self.vendors[vendor] = [
                     fname for fname in fnames if fname.lower().endswith(".svd")
                 ]
         except:
             pass
 
-        if len(self.vendors) > 0:
+        if self.vendors:
             gdb.Command.__init__(self, "svd_load", gdb.COMMAND_USER)
         else:
             gdb.Command.__init__(
@@ -86,13 +84,11 @@ class LoadSVD(gdb.Command):
         args = gdb.string_to_argv(args)
         argc = len(args)
         if argc == 1:
-            gdb.write("Loading SVD file {}...\n".format(args[0]))
+            gdb.write(f"Loading SVD file {args[0]}...\n")
             f = args[0]
         elif argc == 2:
-            gdb.write("Loading SVD file {}/{}...\n".format(args[0], args[1]))
-            f = pkg_resources.resource_filename(
-                "cmsis_svd", "data/{}/{}".format(args[0], args[1])
-            )
+            gdb.write(f"Loading SVD file {args[0]}/{args[1]}...\n")
+            f = pkg_resources.resource_filename("cmsis_svd", f"data/{args[0]}/{args[1]}")
         else:
             raise gdb.GdbError(
                 "Usage: svd_load <vendor> <device.svd> or svd_load <path/to/filename.svd>\n"
@@ -101,7 +97,7 @@ class LoadSVD(gdb.Command):
             SVD(SVDFile(f))
         except Exception as e:
             traceback.print_exc()
-            raise gdb.GdbError("Could not load SVD file {} : {}...\n".format(f, e))
+            raise gdb.GdbError(f"Could not load SVD file {f} : {e}...\n")
 
 
 class SVD(gdb.Command):
@@ -136,11 +132,10 @@ class SVD(gdb.Command):
                                 r"\s+",
                                 " ",
                                 gdb.execute(
-                                    "info symbol {}".format(data), True, True
+                                    f"info symbol {data}", True, True
                                 ).strip(),
                             )
-                            + ">"
-                        )
+                        ) + ">"
                 except gdb.MemoryError:
                     data = "(error reading)"
             else:
@@ -152,18 +147,14 @@ class SVD(gdb.Command):
         column2_width = max(len(reg[1]) for reg in reg_list)
         for reg in reg_list:
             gdb.write(
-                "\t{}:{}{}".format(
-                    reg[0],
-                    "".ljust(column1_width - len(reg[0])),
-                    reg[1].rjust(column2_width),
-                )
+                f'\t{reg[0]}:{"".ljust(column1_width - len(reg[0]))}{reg[1].rjust(column2_width)}'
             )
             if reg[2] != reg[0]:
-                gdb.write("  {}".format(reg[2]))
+                gdb.write(f"  {reg[2]}")
             gdb.write("\n")
 
     def _print_register_fields(self, container_name, form, register):
-        gdb.write("Fields in {}:\n".format(container_name))
+        gdb.write(f"Fields in {container_name}:\n")
         fields = register.fields
         if not register.readable():
             data = 0
@@ -181,10 +172,10 @@ class SVD(gdb.Command):
                 val &= (1 << f.width) - 1
                 if f.enum:
                     if val in f.enum:
-                        desc = f.enum[val][1] + " - " + desc
+                        desc = f"{f.enum[val][1]} - {desc}"
                         val = f.enum[val][0]
                     else:
-                        val = "Invalid enum value: " + self.format(val, form, f.width)
+                        val = f"Invalid enum value: {self.format(val, form, f.width)}"
                 else:
                     val = self.format(val, form, f.width)
             else:
@@ -195,14 +186,10 @@ class SVD(gdb.Command):
         column2_width = max(len(field[1]) for field in field_list)  # padding
         for field in field_list:
             gdb.write(
-                "\t{}:{}{}".format(
-                    field[0],
-                    "".ljust(column1_width - len(field[0])),
-                    field[1].rjust(column2_width),
-                )
+                f'\t{field[0]}:{"".ljust(column1_width - len(field[0]))}{field[1].rjust(column2_width)}'
             )
             if field[2] != field[0]:
-                gdb.write("  {}".format(field[2]))
+                gdb.write(f"  {field[2]}")
             gdb.write("\n")
 
     def invoke(self, args, from_tty):
@@ -308,20 +295,20 @@ class SVD(gdb.Command):
             if s[1] in peripheral.clusters:
                 warn_if_ambiguous(peripheral.clusters, s[1])
                 cluster = peripheral.clusters[s[1]]
-                container = peripheral.name + " > " + cluster.name
+                container = f"{peripheral.name} > {cluster.name}"
                 self._print_registers(container, form, cluster.registers)
 
             elif s[1] in peripheral.registers:
                 warn_if_ambiguous(peripheral.registers, s[1])
                 register = peripheral.registers[s[1]]
-                container = peripheral.name + " > " + register.name
+                container = f"{peripheral.name} > {register.name}"
 
                 self._print_register_fields(container, form, register)
             else:
                 found = False
                 for key in fnmatch.filter(peripheral.registers.keys(), s[1]):
                     register = peripheral.registers[key]
-                    container = peripheral.name + " > " + register.name
+                    container = f"{peripheral.name} > {register.name}"
                     self._print_register_fields(container, form, register)
                     found = True
                 if not found:
@@ -405,10 +392,7 @@ class SVD(gdb.Command):
                 )
                 return
 
-            if not reg.readable():
-                data = 0
-            else:
-                data = self.read(reg.address(), reg.size)
+            data = 0 if not reg.readable() else self.read(reg.address(), reg.size)
             data &= ~(((1 << field.width) - 1) << field.offset)
             data |= val << field.offset
             self.write(reg.address(), data, reg.size)
@@ -452,7 +436,7 @@ class SVD(gdb.Command):
         if bits in BITS_TO_UNPACK_FORMAT:
             unpack_format = BITS_TO_UNPACK_FORMAT[bits]
         # gdb.write("{:x} {}\n".format(address, binascii.hexlify(value)))
-        return struct.unpack_from("<" + unpack_format, value)[0]
+        return struct.unpack_from(f"<{unpack_format}", value)[0]
 
     @staticmethod
     def write(address, data, bits=32):
@@ -468,11 +452,11 @@ class SVD(gdb.Command):
         )
 
         # override it if asked to
-        if form == "x" or form == "a":
+        if form in ["x", "a"]:
             radix = 16
         elif form == "o":
             radix = 8
-        elif form == "b" or form == "t":
+        elif form in ["b", "t"]:
             radix = 2
 
         # format the output
@@ -483,10 +467,7 @@ class SVD(gdb.Command):
         if radix == 8:
             l = int(math.ceil(length / 3.0))
             return "0" + "{:o}".format(value).zfill(l)
-        if radix == 2:
-            return "0b" + "{:b}".format(value).zfill(length)
-        # Default: Just return in decimal
-        return str(value)
+        return "0b" + "{:b}".format(value).zfill(length) if radix == 2 else str(value)
 
     def peripheral_list(self):
         try:
@@ -503,7 +484,7 @@ class SVD(gdb.Command):
                 keys = self.svd_file.peripherals[peripheral].registers.keys()
             return list(keys)
         except:
-            gdb.write("Peripheral {} doesn't exist\n".format(peripheral))
+            gdb.write(f"Peripheral {peripheral} doesn't exist\n")
             return []
 
     def field_list(self, peripheral, register):
@@ -516,5 +497,5 @@ class SVD(gdb.Command):
                 regs = reg.fields.keys()
             return list(regs)
         except:
-            gdb.write("Register {} doesn't exist on {}\n".format(register, peripheral))
+            gdb.write(f"Register {register} doesn't exist on {peripheral}\n")
             return []

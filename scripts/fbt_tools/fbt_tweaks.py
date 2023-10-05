@@ -18,7 +18,7 @@ def find_deepest_user_frame(tb):
         filename = frame[0]
         if filename.find("fbt_tweaks") != -1:
             continue
-        if filename.find(os.sep + "SCons" + os.sep) == -1:
+        if filename.find(f"{os.sep}SCons{os.sep}") == -1:
             return frame
     return tb[0]
 

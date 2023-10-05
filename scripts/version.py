@@ -156,9 +156,8 @@ class Main(App):
                 file.write(new_version_info_fmt)
             # os.utime("../lib/toolbox/version.c", None)
             print("Version information updated")
-        else:
-            if self.args.debug:
-                print("Version information hasn't changed")
+        elif self.args.debug:
+            print("Version information hasn't changed")
 
         version_json = {
             "firmware_build_date": current_info["BUILD_DATE"],

@@ -6,27 +6,17 @@ import time
 
 
 def flp_serial_by_name(flp_name):
-    if sys.platform == "darwin":  # MacOS
-        flp_serial = "/dev/cu.usbmodemflip_" + flp_name + "1"
+    if sys.platform == "darwin":
+        flp_serial = f"/dev/cu.usbmodemflip_{flp_name}1"
         logging.info(f"Darwin, looking for {flp_serial}")
-    elif sys.platform == "linux":  # Linux
-        flp_serial = (
-            "/dev/serial/by-id/usb-Flipper_Devices_Inc._Flipper_"
-            + flp_name
-            + "_flip_"
-            + flp_name
-            + "-if00"
-        )
+    elif sys.platform == "linux":
+        flp_serial = f"/dev/serial/by-id/usb-Flipper_Devices_Inc._Flipper_{flp_name}_flip_{flp_name}-if00"
         logging.info(f"linux, looking for {flp_serial}")
 
     if os.path.exists(flp_serial):
         return flp_serial
-    else:
-        logging.info(f"Couldn't find {flp_name} on this attempt.")
-        if os.path.exists(flp_name):
-            return flp_name
-        else:
-            return ""
+    logging.info(f"Couldn't find {flp_name} on this attempt.")
+    return flp_name if os.path.exists(flp_name) else ""
 
 
 UPDATE_TIMEOUT = 30 * 4  # 4 minutes

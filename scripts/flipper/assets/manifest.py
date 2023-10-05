@@ -54,7 +54,7 @@ class ManifestRecordTimestamp(ManifestRecord):
     tag = "T"
 
     def __init__(self, timestamp: int):
-        self.timestamp = int(timestamp)
+        self.timestamp = timestamp
 
     @staticmethod
     def fromLine(line):
@@ -107,14 +107,13 @@ addManifestRecord(ManifestRecordFile)
 class Manifest:
     def __init__(self, timestamp_value=None):
         self.version = None
-        self.records = []
-        self.records.append(ManifestRecordVersion(MANIFEST_VERSION))
+        self.records = [ManifestRecordVersion(MANIFEST_VERSION)]
         self.records.append(ManifestRecordTimestamp(timestamp_value or timestamp()))
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def load(self, filename):
         with open(filename, "r") as manifest:
-            for line in manifest.readlines():
+            for line in manifest:
                 line = line.strip()
                 if len(line) == 0:
                     continue
